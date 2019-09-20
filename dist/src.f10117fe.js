@@ -117,36 +117,131 @@ parcelRequire = (function (modules, cache, entry, globalName) {
   }
 
   return newRequire;
-})({"src/models/User.ts":[function(require,module,exports) {
+})({
+  'src/models/Model.ts': [function(require, module, exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
 
-var User =
+    var Model =
 /** @class */
 function () {
-  function User(data) {
-    this.data = data;
+  function Model(attributes, events, sync) {
+    this.attributes = attributes;
+    this.events = events;
+    this.sync = sync;
   }
 
-  User.prototype.get = function (propName) {
-    return this.data[propName];
+  Object.defineProperty(Model.prototype, 'on', {
+    get: function get() {
+      return this.events.on;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(Model.prototype, 'trigger', {
+    get: function get() {
+      return this.events.trigger;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+  Object.defineProperty(Model.prototype, 'get', {
+    get: function get() {
+      return this.attributes.get;
+    },
+    enumerable: true,
+    configurable: true,
+  });
+
+  Model.prototype.set = function(update) {
+    this.attributes.set(update);
+    this.events.trigger('change');
   };
 
-  User.prototype.set = function (update) {
-    // @ts-ignore
-    Object.assign(this.data, update);
+  Model.prototype.fetch = function() {
+    var _this = this;
+
+    var id = this.attributes.get('id');
+
+    if (typeof id !== 'number') {
+      throw new Error('Cannot fetch without id');
+    }
+
+    this.sync.fetch(id).then(function(resp) {
+      _this.set(resp.data);
+    });
   };
 
-  User.prototype.on = function (eventName, Callback) {};
+  Model.prototype.save = function() {
+    var _this = this;
 
-  return User;
+    this.sync.save(this.attributes.getAll()).then(function(resp) {
+      _this.trigger('save');
+    }).catch(function() {
+      _this.trigger('error');
+    });
+  };
+
+  return Model;
 }();
 
-exports.User = User;
-},{}],"src/index.ts":[function(require,module,exports) {
+    exports.Model = Model;
+  }, {}],
+  'src/models/User.ts': [function(require, module, exports) {
+    'use strict';
+
+    var __extends = this && this.__extends || function() {
+      var _extendStatics = function extendStatics(d, b) {
+        _extendStatics = Object.setPrototypeOf || {
+          __proto__: [],
+        } instanceof Array && function(d, b) {
+          d.__proto__ = b;
+        } || function(d, b) {
+          for (var p in b) {
+            if (b.hasOwnProperty(p)) d[p] = b[p];
+          }
+        };
+
+        return _extendStatics(d, b);
+      };
+
+      return function(d, b) {
+        _extendStatics(d, b);
+
+        function __() {
+          this.constructor = d;
+        }
+
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+      };
+    }();
+
+    Object.defineProperty(exports, '__esModule', {
+      value: true,
+    });
+
+    var Model_1 = require('./Model');
+
+    var rootUrl = 'http://localhost:3000/users';
+
+    var User =
+      /** @class */
+      function(_super) {
+        __extends(User, _super);
+
+        function User() {
+          return _super !== null && _super.apply(this, arguments) || this;
+        }
+
+        return User;
+      }(Model_1.Model);
+
+    exports.User = User;
+  }, { './Model': 'src/models/Model.ts' }],
+  'src/index.ts': [function(require, module, exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -156,14 +251,14 @@ Object.defineProperty(exports, "__esModule", {
 var User_1 = require("./models/User");
 
 var user = new User_1.User({
-  name: 'myName',
-  age: 20
+  id: 1,
+  name: 'NewerName',
+  age: 0,
 });
-user.set({
-  name: 'newName'
-});
-console.log(user.get('name'));
-console.log(user.get('age'));
+    user.on('save', function() {
+      console.log(user);
+    });
+    user.save();
 },{"./models/User":"src/models/User.ts"}],"C:/Users/bohdan.shtohrinets/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
@@ -192,7 +287,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "63355" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + '60292' + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
